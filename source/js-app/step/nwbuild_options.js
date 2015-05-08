@@ -54,6 +54,11 @@ _frame.app_main.nwbuild_options_init = function( wrapper ){
 			{
 				'accept': 		'.icns',
 				'onchange': 	function(e){
+					/*
+					var input = $(e.target)
+						,val = _g.relative_path(input.val())
+					input.val( val )
+					*/
 					_g.update_options({
 						'macIcns': 	node.path.normalize( $(e.target).val() )
 					})
@@ -75,6 +80,11 @@ _frame.app_main.nwbuild_options_init = function( wrapper ){
 			{
 				'accept': 		'.ico',
 				'onchange': 	function(e){
+					/*
+					var input = $(e.target)
+						,val = _g.relative_path(input.val())
+					input.val( val )
+					*/
 					_g.update_options({
 						'winIco': 	node.path.normalize( $(e.target).val() )
 					})

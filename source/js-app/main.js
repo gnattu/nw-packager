@@ -280,6 +280,17 @@
 			}
 		}
 
+	// 判断与主目录 (package_path) 的相对情况
+	// 如果为主目录的子目录/文件，则返回相对路径，否则返回 false
+		_g.relative_path = function( path_to_check ){
+			var relative = node.path.relative(package_path, node.path.normalize(path_to_check))
+
+			if( !/^[A-Za-z]\:/.test(relative) && !/^[\.]{2}/.test(relative) )
+				return relative
+
+			return path_to_check
+		}
+
 
 
 

@@ -1,26 +1,43 @@
 {
-	"name":		"nw-packager",
-	"main":		"app/main.html",
-	"version":	"0.1.0",
-
-	"debug": 	true,
-
-	"window": {
-		"width": 			1280,
-		"height":			720,
-		"toolbar":			false,
-		"icon": 			null,
-		"position":			"center",
-		"min_width":		800,
-		"min_height":		600,
-		"as_desktop":		false,
-		"resizable":		true,
-		"always-on-top":	false,
-		"fullscreen":		false,
-		"show_in_taskbar":	true,
-		"frame":			false,
-		"show":				false,
-		"kiosk":			false,
-		"transparent":		false
-	}
+  "name": "nw-packager",
+  "main": "app/main.html",
+  "version": "0.1.0",
+  "debug": true,
+  "window": {
+    "width": 1280,
+    "height": 720,
+    "toolbar": false,
+    "icon": null,
+    "position": "center",
+    "min_width": 800,
+    "min_height": 600,
+    "as_desktop": false,
+    "resizable": true,
+    "always-on-top": false,
+    "fullscreen": false,
+    "show_in_taskbar": true,
+    "frame": false,
+    "show": false,
+    "kiosk": false,
+    "transparent": false
+  },
+  "nw-packager": {
+    "platforms": [
+      "win32",
+      "win64",
+      "osx32",
+      "osx64",
+      "linux32",
+      "linux64"
+    ],
+    "filesRelative": [
+      "app",
+      "node_modules",
+      "package.json"
+    ],
+    "dataVersion": {},
+    "dataRelative": [],
+    "macIcns": "appicon.icns",
+    "winIco": "appicon.ico"
+  }
 }

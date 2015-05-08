@@ -1,0 +1,104 @@
+{
+	"IcoMoonType": "selection",
+	"icons": [
+		{
+			"icon": {
+				"paths": [
+					"M917.806 229.076c-22.212-30.292-53.174-65.7-87.178-99.704s-69.412-64.964-99.704-87.178c-51.574-37.82-76.592-42.194-90.924-42.194h-496c-44.112 0-80 35.888-80 80v864c0 44.112 35.888 80 80 80h736c44.112 0 80-35.888 80-80v-624c0-14.332-4.372-39.35-42.194-90.924zM785.374 174.626c30.7 30.7 54.8 58.398 72.58 81.374h-153.954v-153.946c22.984 17.78 50.678 41.878 81.374 72.572zM896 944c0 8.672-7.328 16-16 16h-736c-8.672 0-16-7.328-16-16v-864c0-8.672 7.328-16 16-16 0 0 495.956-0.002 496 0v224c0 17.672 14.326 32 32 32h224v624z"
+				],
+				"attrs": [],
+				"isMulticolor": false,
+				"tags": [
+					"file-empty",
+					"file",
+					"document",
+					"paper",
+					"page",
+					"new",
+					"empty",
+					"blank"
+				],
+				"defaultCode": 57485,
+				"grid": 16
+			},
+			"attrs": [],
+			"properties": {
+				"order": 2,
+				"id": 1598,
+				"prevSize": 32,
+				"code": 58880,
+				"ligatures": "file-empty, file3",
+				"name": "file-empty"
+			},
+			"setIdx": 0,
+			"setId": 0,
+			"iconIdx": 157
+		},
+		{
+			"icon": {
+				"paths": [
+					"M576 256l-128-128h-448v832h1024v-704h-448zM549.49 320h410.51v8h-896v-16h477.49l8 8zM64 896v-8h896v8h-896zM64 872v-16h896v16h-896zM64 840v-16h896v16h-896zM64 808v-16h896v16h-896zM64 776v-16h896v16h-896zM64 744v-16h896v16h-896zM64 712v-16h896v16h-896zM64 680v-16h896v16h-896zM64 648v-16h896v16h-896zM64 616v-16h896v16h-896zM64 584v-16h896v16h-896zM64 552v-16h896v16h-896zM64 520v-16h896v16h-896zM64 488v-16h896v16h-896zM64 456v-16h896v16h-896zM64 424v-16h896v16h-896zM64 392v-16h896v16h-896zM64 360v-16h896v16h-896zM421.49 192l8 8h-365.49v-8h357.49zM445.49 216l16 16h-397.49v-16h381.49zM477.49 248l16 16h-429.49v-16h413.49zM509.492 280l16 16h-461.492v-16h445.492z"
+				],
+				"attrs": [],
+				"isMulticolor": false,
+				"tags": [
+					"folder",
+					"directory",
+					"category",
+					"browse",
+					"dualtone"
+				],
+				"defaultCode": 57507,
+				"grid": 16
+			},
+			"attrs": [],
+			"properties": {
+				"id": 228,
+				"order": 1,
+				"prevSize": 32,
+				"code": 58881,
+				"ligatures": "folder3, directory13",
+				"name": "folder3"
+			},
+			"setIdx": 0,
+			"setId": 0,
+			"iconIdx": 221
+		}
+	],
+	"height": 1024,
+	"metadata": {
+		"name": "NW-packager"
+	},
+	"preferences": {
+		"showGlyphs": true,
+		"showQuickUse": true,
+		"showQuickUse2": true,
+		"showSVGs": true,
+		"fontPref": {
+			"prefix": "icon-",
+			"metadata": {
+				"fontFamily": "NW-packager",
+				"majorVersion": 1,
+				"minorVersion": 0
+			},
+			"metrics": {
+				"emSize": 1024,
+				"baseline": 6.25,
+				"whitespace": 50
+			},
+			"resetPoint": 58880,
+			"showSelector": false,
+			"showMetrics": false,
+			"showMetadata": false,
+			"showVersion": false
+		},
+		"imagePref": {
+			"prefix": "icon-",
+			"png": true,
+			"useClassSelector": true,
+			"color": 4473924,
+			"bgColor": 16777215
+		},
+		"historySize": 100
+	}
+}

@@ -61,6 +61,11 @@ _frame.app_main.project_select_init = function( wrapper ){
 			{
 				'required': 	true,
 				'onchange': 	function(e){
+					/*
+					var input = $(e.target)
+						,val = _g.relative_path(input.val())
+					input.val( val )
+					*/
 					_g.update_options({
 						'buildDir': 	node.path.normalize( $(e.target).val() )
 					})

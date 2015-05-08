@@ -157,6 +157,7 @@ _frame.app_main.processing_on = function(){
 				for( var i in __options ){
 					switch( i ){
 						case 'buildDir':
+						case 'macIcns':
 						case 'winIco':
 							__options[i] = __options[i].replace(/\\/g, '/')
 							break;
@@ -179,6 +180,13 @@ _frame.app_main.processing_on = function(){
 
 	// 使用 node-webkit-builder 进行编译
 		function step_build(){
+			var targetDir = node.path.join( builderOptions['buildDir'], packageJSON['name'] )
+
+			// 清除目标目录，弱不存在则建立
+				node['fs-extra'].emptyDirSync( targetDir )
+
+			_frame.app_main.processing_log('target directory ready.');
+
 			var builder = new NwBuilder(__options);
 			//Log stuff you want
 				builder.on('log', _frame.app_main.processing_log);
