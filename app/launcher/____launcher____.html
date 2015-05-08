@@ -19,9 +19,16 @@
 				,path	= require('path')
 				,jf 	= require('jsonfile')
 				,mkdirp	= require('mkdirp')
+				,Q 		= require('q')
 
 				,gui 		= require('nw.gui')
 				,launcher 	= gui.Window.get()
+
+				// 函数步骤链，使用 Q 实现
+				,promise_chain 	= Q.fcall(function(){})
+
+				// 数据包目录下的文件列表
+				,dataFileList = []
 
 				,dirRoot 	= path.dirname(process.execPath).split(path.sep)
 
@@ -34,173 +41,266 @@
 				,dirApp 	= gui.App.dataPath
 				,dirAppData	= path.join(dirApp, '/Extracted Data/')
 
-			mkdirp.sync( dirAppData )
+			// 处理当前数据包版本
+				try{
+					var curVer = JSON.parse( localStorage['nwjs-data-version'] )
+				}catch(e){
+					var curVer = {}
+				}
+
+
+
+			// 开始异步函数链
+				promise_chain
+
+			// 创建数据包解压缩目录
+				.then(function(){
+					return mkdirp( dirAppData )
+				})
+
+			// 获取数据包目录下的文件列表
+				.then(function(){
+					var deferred 	= Q.defer()
+					fs.readdir(dirData, function(err, files){
+						dataFileList = files
+						deferred.resolve(err)
+					})
+					return deferred.promise
+				})
 
 			// 处理 data 目录下的文件
 			// 解压缩所有 .nwjs-data 文件
-				var dataFiles = fs.readdirSync(dirData)
+				.then(function(){
+					var the_promises 	= []
+					dataFileList.forEach(function( filename ) {
+						var deferred 	= Q.defer()
+							,file 		= path.join(dirData, filename)
 
-				for(var i in dataFiles){
-					var file = path.join(dirData, dataFiles[i])
+						switch( path.extname(file) ){
+							case '.nwjs-data':
+								// 比对版本
+								// 如果版本号高于当前版本，则解压缩覆盖，并更改当前版本号
+								// 否则跳过
+									var zip = new AdmZip(file)
+										,comment = zip.getZipComment()
+										,verCurrent = curVer[filename] || '0'
+									if( compareVersion( comment, curVer[filename] || '0' ) ){
+										//console.log( '[' + filename + '] version '+comment+' greater than current ' + verCurrent )
+										//console.log( 'Extract data files' )
+										var o = {}
+										o[filename] = comment
+										extend(curVer, o)
+										zip.extractAllToAsync(dirAppData, true, function(err){
+											deferred.resolve(err)
+										})
+									}else{
+										//console.log( '[' + filename + '] version '+comment+' not greater than current ' + verCurrent )
+										//console.log( 'Ignored.' )
+										deferred.resolve()
+									}
+								break;
+							default:
+								deferred.resolve()
+								break;
+						}
 
-					switch( path.extname(file) ){
-						case '.nwjs-data':
-							new AdmZip(file).extractAllTo(dirAppData, true)
-							break;
+						// 存储数据包版本号至 localStorage
+							localStorage['nwjs-data-version'] = JSON.stringify(curVer)
+
+						the_promises.push(deferred.promise)
+					});
+
+					return Q.all(the_promises);
+				})
+
+			// 根据 package-app.json 运行程序
+				.then(function(){
+					var deferred 	= Q.defer()
+					// 载入 package-app.json
+						global.launcherOptions = jf.readFileSync('./package-app.json')
+						global.launcherOptions["window"]["focus"] = true
+						
+						var max_width = Math.min( global.launcherOptions["window"]["max_width"] || screen.availWidth, screen.availWidth )
+							,max_height = Math.min( global.launcherOptions["window"]["max_height"] || screen.availHeight, screen.availHeight )
+
+						delete( global.launcherOptions["window"]["max_width"] )
+						delete( global.launcherOptions["window"]["max_height"] )
+
+						global.launcherOptions["window"]["min_width"]
+							= Math.min( global.launcherOptions["window"]["min_width"] || 0, max_width )
+						global.launcherOptions["window"]["min_height"]
+							= Math.min( global.launcherOptions["window"]["min_height"] || 0, max_height )
+						
+						global.launcherOptions["window"]["width"]
+							= Math.min( global.launcherOptions["window"]["width"] || screen.availWidth, max_width )
+						global.launcherOptions["window"]["height"]
+							= Math.min( global.launcherOptions["window"]["height"] || screen.availHeight, max_height )
+						
+						// Platform
+							var platformOverrides = global.launcherOptions['platformOverrides'] || {}
+							if( /^win[0-9]+/i.test(process.platform) ){
+								extend( true, global.launcherOptions, platformOverrides['win'] || {} )
+								if( process.arch == 'x64' ){
+									extend( true, global.launcherOptions, platformOverrides['win64'] || {} )
+								}else{
+									extend( true, global.launcherOptions, platformOverrides['win32'] || {} )
+								}
+							}else if( /^darwin/i.test(process.platform) ){
+								extend( true, global.launcherOptions, platformOverrides['osx'] || {} )
+								if( process.arch == 'ia64' ){
+									extend( true, global.launcherOptions, platformOverrides['osx64'] || {} )
+								}else{
+									extend( true, global.launcherOptions, platformOverrides['osx32'] || {} )
+								}
+							}else if( /^Linux/i.test(process.platform) ){
+								extend( true, global.launcherOptions, platformOverrides['linux'] || {} )
+								if( process.arch == 'x64' ){
+									extend( true, global.launcherOptions, platformOverrides['linux64'] || {} )
+								}else{
+									extend( true, global.launcherOptions, platformOverrides['linux32'] || {} )
+								}
+							}
+					// 开始新的 nw.js 进程
+						var appWin = gui.Window.open(
+								'file://' + path.join(dirAppData, global.launcherOptions.main),
+								global.launcherOptions['window']
+							)
+					// 在 App 窗口载入后，隐藏 luancher 进程
+						appWin.on('loaded', function(){
+							launcher.hide()
+							deferred.resolve()
+						})
+					// 在 App 窗口关闭时，终结原 nw.js 进程 (launcher 进程)
+						appWin.on('closed', function(){
+							launcher.close()
+						})
+
+					return deferred.promise
+				})
+		}, 100)}
+
+		// compare version
+			// 对比版本号 a 相对于 b
+			// a > b => 1
+			// a = b => 0
+			// a < b => -1
+			function compareVersion(a, b) {
+				var i;
+				var len;
+
+				if (typeof a + typeof b !== 'stringstring') {
+					return false;
+				}
+
+				a = a.split('.');
+				b = b.split('.');
+				i = 0;
+				len = Math.max(a.length, b.length);
+
+				for (; i < len; i++) {
+					if ((a[i] && !b[i] && parseInt(a[i]) > 0) || (parseInt(a[i]) > parseInt(b[i]))) {
+						return 1;
+					} else if ((b[i] && !a[i] && parseInt(b[i]) > 0) || (parseInt(a[i]) < parseInt(b[i]))) {
+						return -1;
 					}
 				}
 
-			// 根据 package-app.json 运行程序
-				// 载入 package-app.json
-					global.launcherOptions = jf.readFileSync('./package-app.json')
-					global.launcherOptions["window"]["focus"] = true
-					
-					var max_width = Math.min( global.launcherOptions["window"]["max_width"] || screen.availWidth, screen.availWidth )
-						,max_height = Math.min( global.launcherOptions["window"]["max_height"] || screen.availHeight, screen.availHeight )
+				return 0;
+			};
 
-					delete( global.launcherOptions["window"]["max_width"] )
-					delete( global.launcherOptions["window"]["max_height"] )
 
-					global.launcherOptions["window"]["min_width"]
-						= Math.min( global.launcherOptions["window"]["min_width"] || 0, max_width )
-					global.launcherOptions["window"]["min_height"]
-						= Math.min( global.launcherOptions["window"]["min_height"] || 0, max_height )
-					
-					global.launcherOptions["window"]["width"]
-						= Math.min( global.launcherOptions["window"]["width"] || screen.availWidth, max_width )
-					global.launcherOptions["window"]["height"]
-						= Math.min( global.launcherOptions["window"]["height"] || screen.availHeight, max_height )
-					
-					// Platform
-						var platformOverrides = global.launcherOptions['platformOverrides'] || {}
-						if( /^win[0-9]+/i.test(process.platform) ){
-							extend( true, global.launcherOptions, platformOverrides['win'] || {} )
-							if( process.arch == 'x64' ){
-								extend( true, global.launcherOptions, platformOverrides['win64'] || {} )
-							}else{
-								extend( true, global.launcherOptions, platformOverrides['win32'] || {} )
-							}
-						}else if( /^darwin/i.test(process.platform) ){
-							extend( true, global.launcherOptions, platformOverrides['osx'] || {} )
-							if( process.arch == 'ia64' ){
-								extend( true, global.launcherOptions, platformOverrides['osx64'] || {} )
-							}else{
-								extend( true, global.launcherOptions, platformOverrides['osx32'] || {} )
-							}
-						}else if( /^Linux/i.test(process.platform) ){
-							extend( true, global.launcherOptions, platformOverrides['linux'] || {} )
-							if( process.arch == 'x64' ){
-								extend( true, global.launcherOptions, platformOverrides['linux64'] || {} )
-							}else{
-								extend( true, global.launcherOptions, platformOverrides['linux32'] || {} )
-							}
+		// extend() for $.extend()
+			function extend() {
+				var options, name, src, copy, copyIsArray, clone, target = arguments[0] || {},
+					i = 1,
+					length = arguments.length,
+					deep = false,
+					toString = Object.prototype.toString,
+					hasOwn = Object.prototype.hasOwnProperty,
+					push = Array.prototype.push,
+					slice = Array.prototype.slice,
+					trim = String.prototype.trim,
+					indexOf = Array.prototype.indexOf,
+					class2type = {
+					  "[object Boolean]": "boolean",
+					  "[object Number]": "number",
+					  "[object String]": "string",
+					  "[object Function]": "function",
+					  "[object Array]": "array",
+					  "[object Date]": "date",
+					  "[object RegExp]": "regexp",
+					  "[object Object]": "object"
+					},
+					jQuery = {
+					  isFunction: function (obj) {
+						return jQuery.type(obj) === "function"
+					  },
+					  isArray: Array.isArray ||
+					  function (obj) {
+						return jQuery.type(obj) === "array"
+					  },
+					  isWindow: function (obj) {
+						return obj != null && obj == obj.window
+					  },
+					  isNumeric: function (obj) {
+						return !isNaN(parseFloat(obj)) && isFinite(obj)
+					  },
+					  type: function (obj) {
+						return obj == null ? String(obj) : class2type[toString.call(obj)] || "object"
+					  },
+					  isPlainObject: function (obj) {
+						if (!obj || jQuery.type(obj) !== "object" || obj.nodeType) {
+						  return false
 						}
-				// 开始新的 nw.js 进程
-					var appWin = gui.Window.open(
-							'file://' + path.join(dirAppData, global.launcherOptions.main),
-							global.launcherOptions['window']
-						)
-				// 在 App 窗口载入后，隐藏 luancher 进程
-					appWin.on('loaded', function(){
-						launcher.hide()
-					})
-				// 在 App 窗口关闭时，终结原 nw.js 进程 (launcher 进程)
-					appWin.on('closed', function(){
-						launcher.close()
-					})
-		}, 100)}
-
-		function extend() {
-		    var options, name, src, copy, copyIsArray, clone, target = arguments[0] || {},
-		        i = 1,
-		        length = arguments.length,
-		        deep = false,
-		        toString = Object.prototype.toString,
-		        hasOwn = Object.prototype.hasOwnProperty,
-		        push = Array.prototype.push,
-		        slice = Array.prototype.slice,
-		        trim = String.prototype.trim,
-		        indexOf = Array.prototype.indexOf,
-		        class2type = {
-		          "[object Boolean]": "boolean",
-		          "[object Number]": "number",
-		          "[object String]": "string",
-		          "[object Function]": "function",
-		          "[object Array]": "array",
-		          "[object Date]": "date",
-		          "[object RegExp]": "regexp",
-		          "[object Object]": "object"
-		        },
-		        jQuery = {
-		          isFunction: function (obj) {
-		            return jQuery.type(obj) === "function"
-		          },
-		          isArray: Array.isArray ||
-		          function (obj) {
-		            return jQuery.type(obj) === "array"
-		          },
-		          isWindow: function (obj) {
-		            return obj != null && obj == obj.window
-		          },
-		          isNumeric: function (obj) {
-		            return !isNaN(parseFloat(obj)) && isFinite(obj)
-		          },
-		          type: function (obj) {
-		            return obj == null ? String(obj) : class2type[toString.call(obj)] || "object"
-		          },
-		          isPlainObject: function (obj) {
-		            if (!obj || jQuery.type(obj) !== "object" || obj.nodeType) {
-		              return false
-		            }
-		            try {
-		              if (obj.constructor && !hasOwn.call(obj, "constructor") && !hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
-		                return false
-		              }
-		            } catch (e) {
-		              return false
-		            }
-		            var key;
-		            for (key in obj) {}
-		            return key === undefined || hasOwn.call(obj, key)
-		          }
-		        };
-		      if (typeof target === "boolean") {
-		        deep = target;
-		        target = arguments[1] || {};
-		        i = 2;
-		      }
-		      if (typeof target !== "object" && !jQuery.isFunction(target)) {
-		        target = {}
-		      }
-		      if (length === i) {
-		        target = this;
-		        --i;
-		      }
-		      for (i; i < length; i++) {
-		        if ((options = arguments[i]) != null) {
-		          for (name in options) {
-		            src = target[name];
-		            copy = options[name];
-		            if (target === copy) {
-		              continue
-		            }
-		            if (deep && copy && (jQuery.isPlainObject(copy) || (copyIsArray = jQuery.isArray(copy)))) {
-		              if (copyIsArray) {
-		                copyIsArray = false;
-		                clone = src && jQuery.isArray(src) ? src : []
-		              } else {
-		                clone = src && jQuery.isPlainObject(src) ? src : {};
-		              }
-		              // WARNING: RECURSION
-		              target[name] = extend(deep, clone, copy);
-		            } else if (copy !== undefined) {
-		              target[name] = copy;
-		            }
-		          }
-		        }
-		      }
-		      return target;
-		    }
+						try {
+						  if (obj.constructor && !hasOwn.call(obj, "constructor") && !hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
+							return false
+						  }
+						} catch (e) {
+						  return false
+						}
+						var key;
+						for (key in obj) {}
+						return key === undefined || hasOwn.call(obj, key)
+					  }
+					};
+				  if (typeof target === "boolean") {
+					deep = target;
+					target = arguments[1] || {};
+					i = 2;
+				  }
+				  if (typeof target !== "object" && !jQuery.isFunction(target)) {
+					target = {}
+				  }
+				  if (length === i) {
+					target = this;
+					--i;
+				  }
+				  for (i; i < length; i++) {
+					if ((options = arguments[i]) != null) {
+					  for (name in options) {
+						src = target[name];
+						copy = options[name];
+						if (target === copy) {
+						  continue
+						}
+						if (deep && copy && (jQuery.isPlainObject(copy) || (copyIsArray = jQuery.isArray(copy)))) {
+						  if (copyIsArray) {
+							copyIsArray = false;
+							clone = src && jQuery.isArray(src) ? src : []
+						  } else {
+							clone = src && jQuery.isPlainObject(src) ? src : {};
+						  }
+						  // WARNING: RECURSION
+						  target[name] = extend(deep, clone, copy);
+						} else if (copy !== undefined) {
+						  target[name] = copy;
+						}
+					  }
+					}
+				  }
+				  return target;
+				}
 	</script>
 </head>
 
