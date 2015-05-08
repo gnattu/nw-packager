@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html class="launcher" style="min-height:100%;height:100%;">
+<head>
+	<title>NW.js App Launcher</title>
+	<base target="_self" />
+	<meta name="Robots" content="none"/>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" >
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<meta name="HandheldFriendly" content="true" />
+	<meta charset="UTF-8" />
+	<meta name="description" content="" />
+	<meta name="keywords" content="" />
+	<script type="text/javascript">
+		global.launcherOptions = {}
+		function onLoad(){setTimeout(function(){
+			var AdmZip 	= require('adm-zip')
+				,fs		= require('fs')
+				,path	= require('path')
+				,jf 	= require('jsonfile')
+				,mkdirp	= require('mkdirp')
+
+				,gui 		= require('nw.gui')
+				,launcher 	= gui.Window.get()
+
+				,dirRoot 	= path.dirname(process.execPath).split(path.sep)
+
+			//launcher.showDevTools()
+				dirRoot = (process.platform == 'darwin' || (dirRoot[dirRoot.length - 1] == 'nwjs' && path.basename( process.execPath ) == 'nw.exe') )
+							? process.cwd()
+							: path.dirname(process.execPath)
+
+			var dirData 	= path.join(dirRoot, '/data/')
+				,dirApp 	= gui.App.dataPath
+				,dirAppData	= path.join(dirApp, '/Extracted Data/')
+
+			mkdirp.sync( dirAppData )
+
+			// 处理 data 目录下的文件
+			// 解压缩所有 .nwjs-data 文件
+				var dataFiles = fs.readdirSync(dirData)
+
+				for(var i in dataFiles){
+					var file = path.join(dirData, dataFiles[i])
+
+					switch( path.extname(file) ){
+						case '.nwjs-data':
+							new AdmZip(file).extractAllTo(dirAppData, true)
+							break;
+					}
+				}
+
+			// 根据 package-app.json 运行程序
+				// 载入 package-app.json
+					global.launcherOptions = jf.readFileSync('./package-app.json')
+					global.launcherOptions["window"]["focus"] = true
+					
+					var max_width = Math.min( global.launcherOptions["window"]["max_width"] || screen.availWidth, screen.availWidth )
+						,max_height = Math.min( global.launcherOptions["window"]["max_height"] || screen.availHeight, screen.availHeight )
+
+					delete( global.launcherOptions["window"]["max_width"] )
+					delete( global.launcherOptions["window"]["max_height"] )
+
+					global.launcherOptions["window"]["min_width"]
+						= Math.min( global.launcherOptions["window"]["min_width"] || 0, max_width )
+					global.launcherOptions["window"]["min_height"]
+						= Math.min( global.launcherOptions["window"]["min_height"] || 0, max_height )
+					
+					global.launcherOptions["window"]["width"]
+						= Math.min( global.launcherOptions["window"]["width"] || screen.availWidth, max_width )
+					global.launcherOptions["window"]["height"]
+						= Math.min( global.launcherOptions["window"]["height"] || screen.availHeight, max_height )
+					
+					// Platform
+						var platformOverrides = global.launcherOptions['platformOverrides'] || {}
+						if( /^win[0-9]+/i.test(process.platform) ){
+							extend( true, global.launcherOptions, platformOverrides['win'] || {} )
+							if( process.arch == 'x64' ){
+								extend( true, global.launcherOptions, platformOverrides['win64'] || {} )
+							}else{
+								extend( true, global.launcherOptions, platformOverrides['win32'] || {} )
+							}
+						}else if( /^darwin/i.test(process.platform) ){
+							extend( true, global.launcherOptions, platformOverrides['osx'] || {} )
+							if( process.arch == 'ia64' ){
+								extend( true, global.launcherOptions, platformOverrides['osx64'] || {} )
+							}else{
+								extend( true, global.launcherOptions, platformOverrides['osx32'] || {} )
+							}
+						}else if( /^Linux/i.test(process.platform) ){
+							extend( true, global.launcherOptions, platformOverrides['linux'] || {} )
+							if( process.arch == 'x64' ){
+								extend( true, global.launcherOptions, platformOverrides['linux64'] || {} )
+							}else{
+								extend( true, global.launcherOptions, platformOverrides['linux32'] || {} )
+							}
+						}
+				// 开始新的 nw.js 进程
+					var appWin = gui.Window.open(
+							'file://' + path.join(dirAppData, global.launcherOptions.main),
+							global.launcherOptions['window']
+						)
+				// 在 App 窗口载入后，隐藏 luancher 进程
+					appWin.on('loaded', function(){
+						launcher.hide()
+					})
+				// 在 App 窗口关闭时，终结原 nw.js 进程 (launcher 进程)
+					appWin.on('closed', function(){
+						launcher.close()
+					})
+		}, 100)}
+
+		function extend() {
+		    var options, name, src, copy, copyIsArray, clone, target = arguments[0] || {},
+		        i = 1,
+		        length = arguments.length,
+		        deep = false,
+		        toString = Object.prototype.toString,
+		        hasOwn = Object.prototype.hasOwnProperty,
+		        push = Array.prototype.push,
+		        slice = Array.prototype.slice,
+		        trim = String.prototype.trim,
+		        indexOf = Array.prototype.indexOf,
+		        class2type = {
+		          "[object Boolean]": "boolean",
+		          "[object Number]": "number",
+		          "[object String]": "string",
+		          "[object Function]": "function",
+		          "[object Array]": "array",
+		          "[object Date]": "date",
+		          "[object RegExp]": "regexp",
+		          "[object Object]": "object"
+		        },
+		        jQuery = {
+		          isFunction: function (obj) {
+		            return jQuery.type(obj) === "function"
+		          },
+		          isArray: Array.isArray ||
+		          function (obj) {
+		            return jQuery.type(obj) === "array"
+		          },
+		          isWindow: function (obj) {
+		            return obj != null && obj == obj.window
+		          },
+		          isNumeric: function (obj) {
+		            return !isNaN(parseFloat(obj)) && isFinite(obj)
+		          },
+		          type: function (obj) {
+		            return obj == null ? String(obj) : class2type[toString.call(obj)] || "object"
+		          },
+		          isPlainObject: function (obj) {
+		            if (!obj || jQuery.type(obj) !== "object" || obj.nodeType) {
+		              return false
+		            }
+		            try {
+		              if (obj.constructor && !hasOwn.call(obj, "constructor") && !hasOwn.call(obj.constructor.prototype, "isPrototypeOf")) {
+		                return false
+		              }
+		            } catch (e) {
+		              return false
+		            }
+		            var key;
+		            for (key in obj) {}
+		            return key === undefined || hasOwn.call(obj, key)
+		          }
+		        };
+		      if (typeof target === "boolean") {
+		        deep = target;
+		        target = arguments[1] || {};
+		        i = 2;
+		      }
+		      if (typeof target !== "object" && !jQuery.isFunction(target)) {
+		        target = {}
+		      }
+		      if (length === i) {
+		        target = this;
+		        --i;
+		      }
+		      for (i; i < length; i++) {
+		        if ((options = arguments[i]) != null) {
+		          for (name in options) {
+		            src = target[name];
+		            copy = options[name];
+		            if (target === copy) {
+		              continue
+		            }
+		            if (deep && copy && (jQuery.isPlainObject(copy) || (copyIsArray = jQuery.isArray(copy)))) {
+		              if (copyIsArray) {
+		                copyIsArray = false;
+		                clone = src && jQuery.isArray(src) ? src : []
+		              } else {
+		                clone = src && jQuery.isPlainObject(src) ? src : {};
+		              }
+		              // WARNING: RECURSION
+		              target[name] = extend(deep, clone, copy);
+		            } else if (copy !== undefined) {
+		              target[name] = copy;
+		            }
+		          }
+		        }
+		      }
+		      return target;
+		    }
+	</script>
+</head>
+
+<body style="min-height:100%;height:100%;margin:0;padding:0;overflow:hidden;-webkit-app-region:drag">
+	<img src="____launcher____" style="object-fit:contain;max-height:100%;max-width:100%;min-height:100%;min-width:100%;" onload="onLoad()" />
+</body>
+</html>

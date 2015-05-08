@@ -1,0 +1,26 @@
+{
+	"name":		"Who Calls the Fleet",
+	"main":		"____launcher____.html",
+	"version":	"0.1.0",
+
+	"debug": 	true,
+
+	"window": {
+		"width": 			400,
+		"height":			250,
+		"toolbar":			false,
+		"icon": 			null,
+		"position":			"center",
+		"min_width":		400,
+		"min_height":		250,
+		"as_desktop":		false,
+		"resizable":		false,
+		"always-on-top":	false,
+		"fullscreen":		false,
+		"show_in_taskbar":	true,
+		"frame":			false,
+		"show":				true,
+		"kiosk":			false,
+		"transparent":		true
+	}
+}
