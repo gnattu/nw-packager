@@ -361,6 +361,15 @@ main{
 				}
 			}
 		}
+		&.launcher_options{
+			&>img{
+				display:	block;
+				width:		auto;
+				height:		auto;
+				max-width:	100%;
+				margin:		2em auto 0 auto;
+			}
+		}
 	}
 	table{
 		width:		100%;
@@ -462,6 +471,14 @@ main{
 			}
 			&+p{
 				margin-top:	0.5em;
+			}
+			&.complete{
+				color:		hsl(205, 100%, 50%);
+				font-weight:bold;
+				&>em{
+					color:		hsl(205, 70%, 50%);
+					font-weight:normal;
+				}
 			}
 		}
 	}

@@ -9,10 +9,12 @@
  *
  */
 
+_frame.app_main.launcher_splash_size = {width: 0, height: 0}
+
 _frame.app_main.launcher_options_init = function( wrapper ){
 	_g.gen_title( 'h2', 'Launcher' ).appendTo( wrapper )
 
-	_frame.app_main.launcher_options_form = $('<form/>')
+	_frame.app_main.launcher_options_form = $('<form class="launcher_options"/>')
 				.on('submit',function(e){
 					e.preventDefault()
 				}).appendTo(wrapper)
@@ -48,14 +50,26 @@ _frame.app_main.launcher_options_init = function( wrapper ){
 			null,
 			null,
 			{
-				'accept': 		'.jpg,.jpeg,.png,.gif,.webp',
+				'accept': 		'.jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff',
 				'onchange': 	function(e){
+					var val = $(e.target).val()
 					_g.update_options({
-						'launcherSplash': 	node.path.normalize( $(e.target).val() )
+						'launcherSplash': 	node.path.normalize( val )
 					})
+					_frame.app_main.launcher_options_splashimg.attr('src', val)
 				}
 			}
 		).appendTo( _frame.app_main.launcher_options_form )
+
+	_frame.app_main.launcher_options_splashimg = $('<img/>')
+		.on('load', function(e){
+			if( _frame.app_main.launcher_options_splashimg.attr('src') ){
+				_frame.app_main.launcher_splash_size = {
+					'width': 	e.target.naturalWidth,
+					'height': 	e.target.naturalHeight
+				}
+			}
+		}).appendTo( _frame.app_main.launcher_options_form )
 }
 
 

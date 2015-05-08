@@ -73,6 +73,17 @@ _frame.app_main.processing_on = function(){
 							new_packageJSON = node.jsonfile.readFileSync( node.path.join( package_path, '/package.json' ) )
 							new_packageJSON['name'] = packageJSON['name']
 							new_packageJSON['version'] = packageJSON['version']
+							// 根据Splash图片的大小修改尺寸数据
+								if( _frame.app_main.launcher_splash_size.width && _frame.app_main.launcher_splash_size.height ){
+									var max_width = parseInt( new_packageJSON['window']['width'] )
+										,max_height = parseInt( new_packageJSON['window']['height'] )
+									if( _frame.app_main.launcher_splash_size.width >= _frame.app_main.launcher_splash_size.height ){
+										new_packageJSON['window']['height'] = Math.floor( max_width * _frame.app_main.launcher_splash_size.height / _frame.app_main.launcher_splash_size.width )
+									}else{
+										new_packageJSON['window']['width'] = Math.floor( max_height * _frame.app_main.launcher_splash_size.width / _frame.app_main.launcher_splash_size.height )
+									}
+									//console.log( new_packageJSON['window']['width'], new_packageJSON['window']['height'] )
+								}
 							node.jsonfile.writeFileSync(
 								node.path.join( package_path, '/package.json' ),
 								new_packageJSON
@@ -210,11 +221,13 @@ _frame.app_main.processing_on = function(){
 			// 清除目标目录，弱不存在则建立
 				node['fs-extra'].emptyDirSync( targetDir )
 
-			_frame.app_main.processing_log('target directory ready.');
+			_frame.app_main.processing_log('NwBuilder target directory ready.');
+			_frame.app_main.processing_log('NwBuilder building...');
 
 			var builder = new NwBuilder(__options);
 			//Log stuff you want
-				builder.on('log', _frame.app_main.processing_log);
+				//builder.on('log', _frame.app_main.processing_log);
+				builder.on('log', function(){});
 			// Build returns a promise
 				builder.build().then(function () {
 					_frame.app_main.processing_log('builder done!');
@@ -266,7 +279,7 @@ _frame.app_main.processing_on = function(){
 						function(err){
 							deferred.resolve(err);
 							_frame.app_main.processing_launcher_files = false
-							_frame.app_main.processing_log('package-app.json renamed to package.json.');
+							_frame.app_main.processing_log('package-app.json renamed back to package.json.');
 						}
 					)
 					return deferred.promise;
@@ -338,7 +351,7 @@ _frame.app_main.processing_on = function(){
 
 			return promise_chain_step
 				.then(function(){
-					_frame.app_main.processing_log('all process completed!');
+					_frame.app_main.processing_log('All process completed!', 'complete');
 					_frame.app_main.processing_running = false
 					return promise_chain_step.done()
 				})
@@ -361,7 +374,7 @@ _frame.app_main.processing_on = function(){
 
 
 
-_frame.app_main.processing_log = function( content ){
+_frame.app_main.processing_log = function( content, className ){
 	console.log( content )
 
 	var now = new Date()
@@ -375,7 +388,7 @@ _frame.app_main.processing_log = function( content ){
 			$('<p/>').html(
 				'<em>'+_g.formatTime(new Date(), '%H:%i:%s')+'</em>'
 				+ '<span>'+content+'</span>'
-			)
+			).addClass( className )
 		)
 
 	_frame.app_main.processing_dombody.scrollTop(_frame.app_main.processing_domwrapper[0].clientHeight)

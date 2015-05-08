@@ -7,8 +7,6 @@
 
 	var NwBuilder 	= node.require('node-webkit-builder')
 		,glob 		= node.require('simple-glob')
-		//,ncp 		= node.require('ncp').ncp
-		//,AdmZip 	= node.require('adm-zip')
 		,Q			= node.require('Q')
 
 
