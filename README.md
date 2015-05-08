@@ -3,7 +3,7 @@ A simple packager tool for nw.js project.
 
 ## Base Framework
 
-You may noticed there are many "!Shared" referance in JavaScript and LESS code. These are my base framwork for nw.js project.
+You may noticed there are many "!Shared" referance in JavaScript and LESS code. These are my base framework for nw.js project.
 Feel free to check and fork it on Github: [nw.js-base-framework](https://github.com/Diablohu/nw.js-base-framework).
 
 ## Library / Framework used
