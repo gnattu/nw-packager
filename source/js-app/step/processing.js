@@ -62,7 +62,7 @@ _frame.app_main.processing_on = function(){
 				_frame.app_main.processing_log('copying launcher related files...');
 				node['fs-extra'].copy(
 					node.path.join( _g.root, '/app/launcher' )
-					, node.path.join( package_path )
+					, package_path
 					, function (err) {
 						if (err) {
 							return console.error(err);
@@ -83,6 +83,28 @@ _frame.app_main.processing_on = function(){
 				);
 
 				return deferred.promise;
+			}
+
+			// 修改 launcher HTML 文件的标题为程序名
+			function step_launcher_htmltitle(){
+				var deferred 	= Q.defer()
+					,file 		= node.path.join( package_path, '____launcher____.html' )
+				node.fs.readFile(file, 'utf8', function (err,data) {
+					if (err) {
+						deferred.reject(new Error(error));
+						return console.log(err);
+					}
+					var result = data.replace('<title>____TITLE____</title>', '<title>' + packageJSON['name'] + '</title>');
+
+					node.fs.writeFile(file, result, 'utf8', function (err) {
+						if (err) {
+							deferred.reject(new Error(error));
+							return console.log(err);
+						}
+						deferred.resolve()
+					});
+				});
+				return deferred.promise
 			}
 
 			function step_launcher_createfolder(){
@@ -121,6 +143,7 @@ _frame.app_main.processing_on = function(){
 				return promise_chain_launcher
 					.then( step_launcher_init )
 					.then( step_launcher_copy )
+					.then( step_launcher_htmltitle )
 					.then( step_launcher_createfolder )
 					.then( step_launcher_zip )
 					.then( function(){

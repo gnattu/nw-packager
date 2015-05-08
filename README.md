@@ -12,3 +12,4 @@ Feel free to check and fork it on Github: [nw.js-base-framework](https://github.
 * [archiver](https://github.com/archiverjs/node-archiver)
 * [fs-extra](https://github.com/jprichardson/node-fs-extra)
 * [node-webkit-builder](https://github.com/mllrsohn/node-webkit-builder)
+* [image-size](https://github.com/netroy/image-size)
