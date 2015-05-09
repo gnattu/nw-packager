@@ -28,7 +28,13 @@
 				,promise_chain 	= Q.fcall(function(){})
 
 				// 数据包目录下的文件列表
-				,dataFileList = []
+				,fileListData = []
+
+				// 解压缩工作目录下的文件列表
+				,fileListAppData = []
+
+				// 解压缩工作目录下的文件夹是否为空
+				,isNotEmptyAppDataSub = {}
 
 				,dirRoot 	= path.dirname(process.execPath).split(path.sep)
 
@@ -62,34 +68,73 @@
 				.then(function(){
 					var deferred 	= Q.defer()
 					fs.readdir(dirData, function(err, files){
-						dataFileList = files
+						fileListData = files
 						deferred.resolve(err)
 					})
 					return deferred.promise
+				})
+
+			// 获取解压缩工作目录下的文件列表
+				.then(function(){
+					var deferred 	= Q.defer()
+					fs.readdir(dirAppData, function(err, files){
+						fileListAppData = files
+						deferred.resolve(err)
+					})
+					return deferred.promise
+				})
+
+			// 检查解压缩工作目录下的子文件夹是否为空
+				.then(function(){
+					var the_promises 	= []
+					fileListAppData.forEach(function( filename ) {
+						var deferred 	= Q.defer()
+							,searchPath = path.join( dirAppData, filename )
+						// 检查是否为目录，再检查是否为空
+						fs.stat( searchPath, function(err, stat){
+							if( err || !stat.isDirectory() ){
+								deferred.resolve()
+							}else{
+								fs.readdir( searchPath, function (err, items) {
+									if( !err ){
+										isNotEmptyAppDataSub[filename] = items.length ? true : false
+									}
+									deferred.resolve()
+								})
+							}
+						} )
+						the_promises.push(deferred.promise)
+					})
+					return Q.all(the_promises);
 				})
 
 			// 处理 data 目录下的文件
 			// 解压缩所有 .nwjs-data 文件
 				.then(function(){
 					var the_promises 	= []
-					dataFileList.forEach(function( filename ) {
+					fileListData.forEach(function( filename ) {
 						var deferred 	= Q.defer()
 							,file 		= path.join(dirData, filename)
+							,pathParse 	= path.parse( filename )
 
-						switch( path.extname(file) ){
+						switch( pathParse['ext'] ){
 							case '.nwjs-data':
 								// 比对版本
-								// 如果版本号高于当前版本，则解压缩覆盖，并更改当前版本号
+								// 如果版本号高于当前版本，则进行解压缩操作，并更改当前版本号
 								// 否则跳过
-									var zip = new AdmZip(file)
-										,comment = zip.getZipComment()
-										,verCurrent = curVer[filename] || '0'
-									if( compareVersion( comment, curVer[filename] || '0' ) ){
+									var zip 			= new AdmZip(file)
+										,comment 		= zip.getZipComment()
+										,verCurrent 	= curVer[filename] || '0'
+										// 如果 App 数据目录下对应目录不存在或为空，强制解压缩
+										,extractAnyWay 	= fileListAppData.indexOf(pathParse['name']) < 0 || !isNotEmptyAppDataSub[pathParse['name']]
+									if( extractAnyWay || compareVersion( comment, curVer[filename] || '0' ) ){
 										//console.log( '[' + filename + '] version '+comment+' greater than current ' + verCurrent )
 										//console.log( 'Extract data files' )
-										var o = {}
-										o[filename] = comment
-										extend(curVer, o)
+										// 修改当前版本号变量，在之后写入 localStorage
+											var o = {}
+											o[filename] = comment
+											extend(curVer, o)
+										// 开始解压缩操作
 										zip.extractAllToAsync(dirAppData, true, function(err){
 											deferred.resolve(err)
 										})
