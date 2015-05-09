@@ -13,19 +13,18 @@
 	<meta name="keywords" content="" />
 	<script type="text/javascript">
 		global.launcherOptions = {}
+		var AdmZip 	= require('adm-zip')
+			,fs		= require('fs')
+			,path	= require('path')
+			,jf 	= require('jsonfile')
+			,mkdirp	= require('mkdirp')
+			,Q 		= require('q')
+
+			,gui 		= require('nw.gui')
+			,launcher 	= gui.Window.get()
 		function onLoad(){setTimeout(function(){
-			var AdmZip 	= require('adm-zip')
-				,fs		= require('fs')
-				,path	= require('path')
-				,jf 	= require('jsonfile')
-				,mkdirp	= require('mkdirp')
-				,Q 		= require('q')
-
-				,gui 		= require('nw.gui')
-				,launcher 	= gui.Window.get()
-
 				// 函数步骤链，使用 Q 实现
-				,promise_chain 	= Q.fcall(function(){})
+			var promise_chain 	= Q.fcall(function(){})
 
 				// 数据包目录下的文件列表
 				,fileListData = []
@@ -126,7 +125,10 @@
 										,comment 		= zip.getZipComment()
 										,verCurrent 	= curVer[filename] || '0'
 										// 如果 App 数据目录下对应目录不存在或为空，强制解压缩
-										,extractAnyWay 	= fileListAppData.indexOf(pathParse['name']) < 0 || !isNotEmptyAppDataSub[pathParse['name']]
+										,existInAppData = (fileListAppData.indexOf(pathParse['name']) > -1)
+										,isNotEmpty 	= isNotEmptyAppDataSub[pathParse['name']]
+										,extractAnyWay 	= !existInAppData || !isNotEmpty
+									//console.log( path.join(dirAppData, pathParse['name']), existInAppData, isNotEmpty, extractAnyWay )
 									if( extractAnyWay || compareVersion( comment, curVer[filename] || '0' ) ){
 										//console.log( '[' + filename + '] version '+comment+' greater than current ' + verCurrent )
 										//console.log( 'Extract data files' )
@@ -135,9 +137,11 @@
 											o[filename] = comment
 											extend(curVer, o)
 										// 开始解压缩操作
-										zip.extractAllToAsync(dirAppData, true, function(err){
-											deferred.resolve(err)
-										})
+											if( existInAppData && isNotEmpty )
+												rmDir( path.join(dirAppData, pathParse['name']) )
+											zip.extractAllToAsync(dirAppData, true, function(err){
+												deferred.resolve(err)
+											})
 									}else{
 										//console.log( '[' + filename + '] version '+comment+' not greater than current ' + verCurrent )
 										//console.log( 'Ignored.' )
@@ -346,6 +350,26 @@
 				  }
 				  return target;
 				}
+
+		// Empty directory
+		// code from https://gist.github.com/liangzan/807712
+			rmDir = function(dirPath, removeSelf) {
+				if (removeSelf === undefined)
+				removeSelf = true;
+				try { var files = fs.readdirSync(dirPath); }
+				catch(e) { return; }
+				if (files.length > 0)
+					for (var i = 0; i < files.length; i++) {
+						//var filePath = dirPath + '/' + files[i];
+						var filePath = path.join(dirPath, files[i]);
+						if (fs.statSync(filePath).isFile())
+							fs.unlinkSync(filePath);
+						else
+							rmDir(filePath);
+					}
+				if (removeSelf)
+					fs.rmdirSync(dirPath);
+			};
 	</script>
 </head>
 
