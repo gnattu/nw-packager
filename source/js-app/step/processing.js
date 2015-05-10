@@ -73,6 +73,7 @@ _frame.app_main.processing_on = function(){
 							new_packageJSON = node.jsonfile.readFileSync( node.path.join( package_path, '/package.json' ) )
 							new_packageJSON['name'] = packageJSON['name']
 							new_packageJSON['version'] = packageJSON['version']
+							new_packageJSON['window']['icon'] = packageJSON['window']['icon']
 							// 根据Splash图片的大小修改尺寸数据
 								if( _frame.app_main.launcher_splash_size.width && _frame.app_main.launcher_splash_size.height ){
 									var max_width = parseInt( new_packageJSON['window']['width'] )

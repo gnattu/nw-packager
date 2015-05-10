@@ -277,6 +277,9 @@
 						break;
 				}
 			}
+			if( packageJSON['window']['icon'] )
+				_frame.app_main.fields['menifest_window_icon'].children('input[type="text"]')
+					.val(packageJSON['window']['icon'])
 		}
 
 	// 判断与主目录 (package_path) 的相对情况
@@ -533,13 +536,34 @@ _frame.app_main.project_select_submit = function(){
 
 
 _frame.app_main.nwbuild_options_init = function( wrapper ){
-	_g.gen_title( 'h2', 'Packager options' ).appendTo( wrapper )
-
 	_frame.app_main.nwbuild_options_form = $('<form/>')
 				.on('submit',function(e){
 					_frame.app_main.nwbuild_options_submit()
 					e.preventDefault()
 				}).appendTo(wrapper)
+
+	_g.gen_title( 'h2', 'Menifest.Window' ).appendTo( _frame.app_main.nwbuild_options_form )
+
+	_frame.app_main.fields['menifest_window_icon']
+		= _g.gen_form_line(
+			'file',
+			'menifest_window_icon',
+			'PNG for icon, WINDOWS ONLY',
+			null,
+			null,
+			{
+				'accept': 		'.png',
+				'onchange': 	function(e){
+					var input = $(e.target)
+						,val = _g.relative_path(input.val())
+					input.val( val )
+					packageJSON['window']['icon'] = val
+					node.jsonfile.writeFileSync(packageJSON_path, packageJSON)
+				}
+			}
+		).appendTo( _frame.app_main.nwbuild_options_form )
+
+	_g.gen_title( 'h2', 'Packager options' ).appendTo( _frame.app_main.nwbuild_options_form )
 
 	_frame.app_main.fields['platforms']
 		= _g.gen_form_line(
@@ -627,6 +651,7 @@ _frame.app_main.nwbuild_options_init = function( wrapper ){
 		).appendTo( _frame.app_main.nwbuild_options_form )
 
 	// platformOverrides
+
 }
 
 
@@ -968,6 +993,7 @@ _frame.app_main.processing_on = function(){
 							new_packageJSON = node.jsonfile.readFileSync( node.path.join( package_path, '/package.json' ) )
 							new_packageJSON['name'] = packageJSON['name']
 							new_packageJSON['version'] = packageJSON['version']
+							new_packageJSON['window']['icon'] = packageJSON['window']['icon']
 							// 根据Splash图片的大小修改尺寸数据
 								if( _frame.app_main.launcher_splash_size.width && _frame.app_main.launcher_splash_size.height ){
 									var max_width = parseInt( new_packageJSON['window']['width'] )

@@ -1,11 +1,32 @@
 _frame.app_main.nwbuild_options_init = function( wrapper ){
-	_g.gen_title( 'h2', 'Packager options' ).appendTo( wrapper )
-
 	_frame.app_main.nwbuild_options_form = $('<form/>')
 				.on('submit',function(e){
 					_frame.app_main.nwbuild_options_submit()
 					e.preventDefault()
 				}).appendTo(wrapper)
+
+	_g.gen_title( 'h2', 'Menifest.Window' ).appendTo( _frame.app_main.nwbuild_options_form )
+
+	_frame.app_main.fields['menifest_window_icon']
+		= _g.gen_form_line(
+			'file',
+			'menifest_window_icon',
+			'PNG for icon, WINDOWS ONLY',
+			null,
+			null,
+			{
+				'accept': 		'.png',
+				'onchange': 	function(e){
+					var input = $(e.target)
+						,val = _g.relative_path(input.val())
+					input.val( val )
+					packageJSON['window']['icon'] = val
+					node.jsonfile.writeFileSync(packageJSON_path, packageJSON)
+				}
+			}
+		).appendTo( _frame.app_main.nwbuild_options_form )
+
+	_g.gen_title( 'h2', 'Packager options' ).appendTo( _frame.app_main.nwbuild_options_form )
 
 	_frame.app_main.fields['platforms']
 		= _g.gen_form_line(
@@ -93,6 +114,7 @@ _frame.app_main.nwbuild_options_init = function( wrapper ){
 		).appendTo( _frame.app_main.nwbuild_options_form )
 
 	// platformOverrides
+
 }
 
 

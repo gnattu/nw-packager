@@ -277,6 +277,9 @@
 						break;
 				}
 			}
+			if( packageJSON['window']['icon'] )
+				_frame.app_main.fields['menifest_window_icon'].children('input[type="text"]')
+					.val(packageJSON['window']['icon'])
 		}
 
 	// 判断与主目录 (package_path) 的相对情况
