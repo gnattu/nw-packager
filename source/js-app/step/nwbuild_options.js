@@ -5,115 +5,164 @@ _frame.app_main.nwbuild_options_init = function( wrapper ){
 					e.preventDefault()
 				}).appendTo(wrapper)
 
-	_g.gen_title( 'h2', 'Menifest.Window' ).appendTo( _frame.app_main.nwbuild_options_form )
+	// Menifest JSON
+		_g.gen_title( 'h2', 'Menifest window object' ).appendTo( _frame.app_main.nwbuild_options_form )
 
-	_frame.app_main.fields['menifest_window_icon']
-		= _g.gen_form_line(
-			'file',
-			'menifest_window_icon',
-			'PNG for icon, WINDOWS ONLY',
-			null,
-			null,
-			{
-				'accept': 		'.png',
-				'onchange': 	function(e){
-					var input = $(e.target)
-						,val = _g.relative_path(input.val())
-					input.val( val )
-					packageJSON['window']['icon'] = val
-					node.jsonfile.writeFileSync(packageJSON_path, packageJSON)
+		_frame.app_main.fields['menifest_window_icon']
+			= _g.gen_form_line(
+				'file',
+				'menifest_window_icon',
+				'PNG for icon, WINDOWS ONLY',
+				null,
+				null,
+				{
+					'accept': 		'.png',
+					'onchange': 	function(e){
+						var input = $(e.target)
+							,val = _g.relative_path(input.val())
+						input.val( val )
+						packageJSON['window']['icon'] = val
+						node.jsonfile.writeFileSync(packageJSON_path, packageJSON)
+					}
 				}
-			}
-		).appendTo( _frame.app_main.nwbuild_options_form )
+			).appendTo( _frame.app_main.nwbuild_options_form )
 
-	_g.gen_title( 'h2', 'Packager options' ).appendTo( _frame.app_main.nwbuild_options_form )
+	// NwBuilder
+		_g.gen_title( 'h2', 'NwBuilder options' ).appendTo( _frame.app_main.nwbuild_options_form )
 
-	_frame.app_main.fields['platforms']
-		= _g.gen_form_line(
-			'checkboxes',
-			'platforms',
-			'Platforms to build',
-			[
-				['win32', true],
-				['win64', true],
-				['osx32', true],
-				['osx64', true],
-				['linux32', false],
-				['linux64', false]
-			],
-			null,
-			{
-				'onchange': 	function(e){
-					var value = []
-					_frame.app_main.fields['platforms'].children('input[name="platforms"]:checked').each(function(){
-						value.push( $(this).val() )
-					})
-					_g.update_options({
-						'platforms': 	value
-					}, true)
+		_frame.app_main.fields['version']
+			= _g.gen_form_line(
+				'select',
+				'version',
+				'NW.js version to build',
+				[
+					'latest',
+					'0.12.0'
+				],
+				null,
+				{
+					'default': 		'latest',
+					'onchange': 	function(e){
+						_g.update_options({
+							'version': 	$(e.target).val()
+						})
+					}
 				}
-			}
-		).appendTo( _frame.app_main.nwbuild_options_form )
+			).appendTo( _frame.app_main.nwbuild_options_form )
 
-	// appName
-		// overrite original ?
-
-	// appVersion
-		// overrite original ?
-
-	// buildType
-
-	// macCredits
-
-	_frame.app_main.fields['macIcns']
-		= _g.gen_form_line(
-			'file',
-			'macIcns',
-			'ICNS for icon, MAC ONLY',
-			null,
-			null,
-			{
-				'accept': 		'.icns',
-				'onchange': 	function(e){
-					/*
-					var input = $(e.target)
-						,val = _g.relative_path(input.val())
-					input.val( val )
-					*/
-					_g.update_options({
-						'macIcns': 	node.path.normalize( $(e.target).val() )
-					})
+		// get nw.js versions
+		// code from NwBuilder
+			var searchRes
+				,scrapePtrn = /href="v?([0-9]+\.[0-9]+\.[0-9]+[^"]*)\/"/ig
+				,versions = []
+			node.request('http://dl.nwjs.io/', function(err, res, body){
+				if( !err && res.statusCode == 200 ){
+					while( (searchRes = scrapePtrn.exec(body)) !== null ){
+						searchRes = searchRes[1]
+						if( node.semver.valid(searchRes) && $.inArray(searchRes, versions) < 0 ){
+							versions.push(searchRes)
+						}
+					}
+					versions = versions.sort(function(a,b){ return node.semver.compare(b,a); })
 				}
-			}
-		).appendTo( _frame.app_main.nwbuild_options_form )
 
-	// macZip
-
-	// macPlist
-
-	_frame.app_main.fields['winIco']
-		= _g.gen_form_line(
-			'file',
-			'winIco',
-			'ICO for icon, WINDOWS ONLY',
-			null,
-			null,
-			{
-				'accept': 		'.ico',
-				'onchange': 	function(e){
-					/*
-					var input = $(e.target)
-						,val = _g.relative_path(input.val())
-					input.val( val )
-					*/
-					_g.update_options({
-						'winIco': 	node.path.normalize( $(e.target).val() )
-					})
+				var select = _frame.app_main.fields['version'].children('select')
+				versions.splice(0, 0, 'latest')
+				if( versions.length )
+					select.empty()
+				for( var i in versions ){
+					$('<option value="' + versions[i] + '"/>')
+						.html(versions[i])
+						.appendTo( select )
 				}
-			}
-		).appendTo( _frame.app_main.nwbuild_options_form )
+			})
 
-	// platformOverrides
+		_frame.app_main.fields['platforms']
+			= _g.gen_form_line(
+				'checkboxes',
+				'platforms',
+				'Platforms to build',
+				[
+					['win32', true],
+					['win64', true],
+					['osx32', true],
+					['osx64', true],
+					['linux32', false],
+					['linux64', false]
+				],
+				null,
+				{
+					'onchange': 	function(e){
+						var value = []
+						_frame.app_main.fields['platforms'].children('input[name="platforms"]:checked').each(function(){
+							value.push( $(this).val() )
+						})
+						_g.update_options({
+							'platforms': 	value
+						}, true)
+					}
+				}
+			).appendTo( _frame.app_main.nwbuild_options_form )
+
+		// appName
+			// overrite original ?
+
+		// appVersion
+			// overrite original ?
+
+		// buildType
+
+		// macCredits
+
+		_frame.app_main.fields['macIcns']
+			= _g.gen_form_line(
+				'file',
+				'macIcns',
+				'ICNS for icon, MAC ONLY',
+				null,
+				null,
+				{
+					'accept': 		'.icns',
+					'onchange': 	function(e){
+						/*
+						var input = $(e.target)
+							,val = _g.relative_path(input.val())
+						input.val( val )
+						*/
+						_g.update_options({
+							'macIcns': 	node.path.normalize( $(e.target).val() )
+						})
+					}
+				}
+			).appendTo( _frame.app_main.nwbuild_options_form )
+
+		// macZip
+
+		// macPlist
+
+		_frame.app_main.fields['winIco']
+			= _g.gen_form_line(
+				'file',
+				'winIco',
+				'ICO for icon, WINDOWS ONLY',
+				null,
+				null,
+				{
+					'accept': 		'.ico',
+					'onchange': 	function(e){
+						/*
+						var input = $(e.target)
+							,val = _g.relative_path(input.val())
+						input.val( val )
+						*/
+						_g.update_options({
+							'winIco': 	node.path.normalize( $(e.target).val() )
+						})
+					}
+				}
+			).appendTo( _frame.app_main.nwbuild_options_form )
+
+		// platformOverrides
 
 }
 

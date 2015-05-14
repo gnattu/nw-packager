@@ -139,7 +139,7 @@ _frame.app_main.files_select_on = function(){
 				)
 				.appendTo(row)
 
-			$('<td/>').html(mtime.toLocaleString()).appendTo(row)
+			$('<td class="time"/>').html(mtime.toLocaleString()).appendTo(row)
 		}
 
 	for( var i in folders )

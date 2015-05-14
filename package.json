@@ -7,7 +7,7 @@
     "width": 1280,
     "height": 720,
     "toolbar": false,
-    "icon": null,
+    "icon": "appicon.png",
     "position": "center",
     "min_width": 800,
     "min_height": 600,

@@ -228,7 +228,7 @@ _frame.app_main.processing_on = function(){
 			var builder = new NwBuilder(__options);
 			//Log stuff you want
 				//builder.on('log', _frame.app_main.processing_log);
-				builder.on('log', function(){});
+				builder.on('log', console.log);
 			// Build returns a promise
 				builder.build().then(function () {
 					_frame.app_main.processing_log('builder done!');

@@ -4,6 +4,8 @@
 	node.require('rimraf')
 	node.require('fs-extra')
 	node.require('archiver')
+	node.require('request')
+	node.require('semver')
 
 	var NwBuilder 	= node.require('node-webkit-builder')
 		,glob 		= node.require('simple-glob')
@@ -173,7 +175,7 @@
 					,button 	= $('<button type="button" value="Browse..."/>').html('Browse...')
 									.on('click', function(){
 										//console.log(123)
-										if( type == 'file' )
+										//if( type == 'file' )
 											fileinput.trigger('click')
 									})
 					,inputAll	= input.add(fileinput).add(button)
@@ -232,6 +234,7 @@
 	}
 
 	var builderOptions = {
+				'version': 		'latest',
 				'platforms': 	['osx32', 'osx64', 'win32', 'win64'],
 				'filesRelative':['node_modules', 'package.json'],
 				'dataVersion': 	{}
@@ -257,14 +260,14 @@
 			$.extend( true, builderOptions, obj )
 			for( var i in builderOptions ){
 				switch(i){
-					case 'buildDir':
-					case 'launcherSplash':
-					case 'macIcns':
-					case 'winIco':
-						_frame.app_main.fields[i].children('input[type="text"]')
-							.val(builderOptions[i])
-							.trigger('change')
-						break;
+					//case 'buildDir':
+					//case 'launcherSplash':
+					//case 'macIcns':
+					//case 'winIco':
+					//	_frame.app_main.fields[i].children('input[type="text"]')
+					//		.val(builderOptions[i])
+					//		.trigger('change')
+					//	break;
 					case 'enableLauncher':
 						_frame.app_main.fields[i].children('input[type="checkbox"]')
 							.prop('checked', builderOptions[i])
@@ -274,6 +277,13 @@
 						_frame.app_main.fields[i].children('input[value="' + builderOptions[i].join('"],[value="') + '"]')
 							.prop('checked', true)
 							.trigger('change')
+						break;
+					default:
+						if(_frame.app_main.fields[i] && _frame.app_main.fields[i].children){
+							_frame.app_main.fields[i].children('input[type="text"],select')
+								.val(builderOptions[i])
+								.trigger('change')
+						}
 						break;
 				}
 			}
