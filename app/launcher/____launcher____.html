@@ -127,13 +127,13 @@
 								// 否则跳过
 									var zip 			= new AdmZip(file)
 										,comment 		= zip.getZipComment()
-										,verCurrent 	= curVer[filename] || '0'
+										,verCurrent 	= curVer[pathParse['name']] || '0'
 										// 如果 App 数据目录下对应目录不存在或为空，强制解压缩
 										,existInAppData = (fileListAppData.indexOf(pathParse['name']) > -1)
 										,isNotEmpty 	= isNotEmptyAppDataSub[pathParse['name']]
 										,extractAnyWay 	= !existInAppData || !isNotEmpty
 									//console.log( path.join(dirAppData, pathParse['name']), existInAppData, isNotEmpty, extractAnyWay )
-									if( extractAnyWay || compareVersion( comment, curVer[filename] || '0' ) ){
+									if( extractAnyWay || compareVersion( comment, verCurrent ) ){
 										//console.log( '[' + filename + '] version '+comment+' greater than current ' + verCurrent )
 										//console.log( 'Extract data files' )
 										// 修改当前版本号变量，在之后写入 localStorage
