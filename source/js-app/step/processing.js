@@ -211,13 +211,13 @@ _frame.app_main.processing_on = function(){
 				console.log( __options )
 
 			// 执行下一步
-				return Q()
+				return true
 		}
 
 	// 使用 node-webkit-builder 进行编译
 		function step_build(){
 			var targetDir = node.path.join( builderOptions['buildDir'], packageJSON['name'] )
-				,deferred = Q.defer();
+				,deferred = Q.defer()
 
 			// 清除目标目录，弱不存在则建立
 				node['fs-extra'].emptyDirSync( targetDir )
@@ -228,7 +228,7 @@ _frame.app_main.processing_on = function(){
 			var builder = new NwBuilder(__options);
 			//Log stuff you want
 				//builder.on('log', _frame.app_main.processing_log);
-				builder.on('log', console.log);
+				//builder.on('log', console.log);
 			// Build returns a promise
 				builder.build().then(function () {
 					_frame.app_main.processing_log('builder done!');
@@ -267,7 +267,7 @@ _frame.app_main.processing_on = function(){
 
 					return Q.all(the_promises);
 				}else{
-					return Q()
+					return true
 				}
 		}
 		function step_last_renamebacklauncher_promise(){
@@ -285,7 +285,7 @@ _frame.app_main.processing_on = function(){
 					)
 					return deferred.promise;
 				}else{
-					return Q()
+					return true
 				}
 		}
 		function step_last(){

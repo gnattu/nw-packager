@@ -35,6 +35,10 @@
 				// 解压缩工作目录下的文件夹是否为空
 				,isNotEmptyAppDataSub = {}
 
+				// 更新的数据包列表
+				,appDataUpdatList = {}
+				,appDataUpdated = false
+
 				,dirRoot 	= path.dirname(process.execPath).split(path.sep)
 
 			//launcher.showDevTools()
@@ -134,11 +138,13 @@
 										//console.log( 'Extract data files' )
 										// 修改当前版本号变量，在之后写入 localStorage
 											var o = {}
-											o[filename] = comment
+											o[pathParse['name']] = comment
 											extend(curVer, o)
 										// 开始解压缩操作
 											if( existInAppData && isNotEmpty )
 												rmDir( path.join(dirAppData, pathParse['name']) )
+											appDataUpdatList[pathParse['name']] = comment
+											appDataUpdated = true
 											zip.extractAllToAsync(dirAppData, true, function(err){
 												deferred.resolve(err)
 											})
@@ -168,6 +174,8 @@
 					// 载入 package-app.json
 						global.launcherOptions = jf.readFileSync('./package-app.json')
 						global.launcherOptions["window"]["focus"] = true
+						if( appDataUpdated )
+							global.launcherOptions["dataUpdated"] = appDataUpdatList
 						
 						var max_width = Math.min( global.launcherOptions["window"]["max_width"] || screen.availWidth, screen.availWidth )
 							,max_height = Math.min( global.launcherOptions["window"]["max_height"] || screen.availHeight, screen.availHeight )
