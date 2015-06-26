@@ -58,6 +58,26 @@
 				}
 
 
+			// Error Logger
+				function errorlog( err ){
+					//console.log(err)
+					fs.appendFileSync(
+						path.join(dirRoot, 'errorlog.txt'),
+						new Date()
+						+ "\r\n"
+						+ ( (err instanceof Error)
+							? err.message || ''
+							: err
+						)
+						+ "\r\n"
+						+ "\r\n"
+						+ "========================================"
+						+ "\r\n"
+						+ "\r\n"
+					)
+				}
+
+
 
 			// 开始异步函数链
 				promise_chain
@@ -71,8 +91,12 @@
 				.then(function(){
 					var deferred 	= Q.defer()
 					fs.readdir(dirData, function(err, files){
-						fileListData = files
-						deferred.resolve(err)
+						if( err ){
+							deferred.reject(new Error(err))
+						}else{
+							fileListData = files
+							deferred.resolve(err)
+						}
 					})
 					return deferred.promise
 				})
@@ -81,8 +105,12 @@
 				.then(function(){
 					var deferred 	= Q.defer()
 					fs.readdir(dirAppData, function(err, files){
-						fileListAppData = files
-						deferred.resolve(err)
+						if( err ){
+							deferred.reject(new Error(err))
+						}else{
+							fileListAppData = files
+							deferred.resolve(err)
+						}
 					})
 					return deferred.promise
 				})
@@ -96,11 +124,21 @@
 						// 检查是否为目录，再检查是否为空
 						fs.stat( searchPath, function(err, stat){
 							if( err || !stat.isDirectory() ){
+								if( err ){
+									try{
+										errorlog(new Error(err))
+									}catch(e){}
+								}
 								deferred.resolve()
 							}else{
 								fs.readdir( searchPath, function (err, items) {
 									if( !err ){
 										isNotEmptyAppDataSub[filename] = items.length ? true : false
+									}
+									if( err ){
+										try{
+											errorlog(new Error(err))
+										}catch(e){}
 									}
 									deferred.resolve()
 								})
@@ -233,6 +271,13 @@
 						})
 
 					return deferred.promise
+				})
+			
+			// Error Handler
+				.catch(function (err) {
+					try{
+						errorlog(new Error(err))
+					}catch(e){}
 				})
 		}, 100)}
 
