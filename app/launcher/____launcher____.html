@@ -22,6 +22,14 @@
 
 			,gui 		= require('nw.gui')
 			,launcher 	= gui.Window.get()
+			if (process.platform === "darwin") {
+				var mb = new gui.Menu({type: 'menubar'});
+				mb.createMacBuiltin('RoboPaint', {
+					hideEdit: false,
+				});
+				gui.Window.get().menu = mb;
+				
+			}
 		function onLoad(){setTimeout(function(){
 				// 函数步骤链，使用 Q 实现
 			var promise_chain 	= Q.fcall(function(){})
